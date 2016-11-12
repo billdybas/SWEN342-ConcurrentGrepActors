@@ -1,7 +1,7 @@
 
 public class FileCount {
 
- private int numOfFiles;
+ private final int numOfFiles;
 
  	public FileCount(int numOfFiles) {
  		this.numOfFiles = numOfFiles;
