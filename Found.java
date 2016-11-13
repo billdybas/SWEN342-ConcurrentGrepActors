@@ -1,4 +1,4 @@
-import java.util.*;
+import java.util.List;
 
 public class Found {
 	private final List<String> foundLines;

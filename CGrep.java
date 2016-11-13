@@ -1,14 +1,10 @@
-import java.io.BufferedReader;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+
+import akka.actor.ActorRef;
+import akka.actor.ActorSystem;
+import akka.actor.Props;
 
 public class CGrep {
 
@@ -18,51 +14,31 @@ public class CGrep {
 			System.err.println("Usage: java CGrep pattern [file...]");
 			return;
 		}
-		
+
 		// Get the regex to match
 		String regex = args[0];
-		
-		Map<String, InputStream> streams = new HashMap<String, InputStream>();
 
-		// Map between filenames and InputStreams that can read those files
-		if (args.length == 1) {
-			// If there's no file names listed, we're using stdin
+		// Create an ActorSystem
+		ActorSystem system = ActorSystem.create("CGrep");
+		// Create the CollectionActor
+		ActorRef collectionActor = system.actorOf(Props.create(CollectionActor.class));
+		// Create the ScanActor
+		ActorRef scanActor = system.actorOf(Props.create(ScanActor.class));
 
-			// Use the empty string as the file name since actual files must have a non-empty name
-			streams.put("", System.in);
-		} else {
-			// Otherwise, the rest of args is file names
-
-			// Convert the file args to a List
+		if (args.length > 1) {
 			List<String> files = new ArrayList<String>(Arrays.asList(args));
-			// Remove the Pattern argument
-			files.remove(0);
+			files.remove(0); // Remove pattern argument
 
-			// Make FileInputStreams for each file
-			for (String s: files) {
-				try {
-					streams.put(s, new FileInputStream(s));
-				} catch (FileNotFoundException e) {
-					System.err.println("Can't find file " + s + ". Skipping it.");
-				}
+			// Tell the CollectionActor the number of files to read from
+			collectionActor.tell(new FileCount(files.size()), ActorRef.noSender());
+
+			// Tell the ScanActor the files to read
+			for (String file: files) {
+				scanActor.tell(new Configure(file, collectionActor, regex), ActorRef.noSender());
 			}
+		} else {
+			// Tell the ScanActor to read from stdin
+			scanActor.tell(new Configure(null, collectionActor, regex), ActorRef.noSender());
 		}
-		
-		// Go through every stream and read its contents
-		for (String name: streams.keySet()) {
-			BufferedReader b = new BufferedReader(new InputStreamReader(streams.get(name)));
-
-			List<String> contents = new ArrayList<String>();
-			String line;
-			try {
-				while ((line = b.readLine()) != null) {
-					contents.add(line);
-				}
-			} catch (IOException e) {
-				e.printStackTrace();
-			}
-
-			// TODO: ScanActor for this stream?
-		}	
 	}
 }

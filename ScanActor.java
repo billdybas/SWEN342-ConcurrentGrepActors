@@ -18,6 +18,7 @@ public class ScanActor extends UntypedActor {
 			throw new IllegalArgumentException("ScanActor expects a message of type Configure");
 		}
 
+		// These messages are instances of Configure
 		Configure c = ((Configure)message);
 		String filename = c.getFilename();
 		ActorRef actor = c.getActor();
@@ -43,12 +44,14 @@ public class ScanActor extends UntypedActor {
 		} catch (FileNotFoundException e) {
 			System.err.println("Can't find file " + filename);
 		} finally {
+			// Close the Scanner
 			if (scanner != null) {
 				scanner.close();
 			}
 		}
 
-		actor.tell(new Found(matches, filename), actor);
+		// Tell the CollectionActor the lines that were found
+		actor.tell(new Found(matches, filename), getSender());
 	}
 
 	private void addOccurance(int lineNumber, String line) {

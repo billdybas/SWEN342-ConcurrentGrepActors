@@ -18,16 +18,16 @@ public class CollectionActor extends UntypedActor {
 			// These messages are instances of Found
 			Found f = (Found)message;
 
+			// Print out the filename and the lines found
 			System.out.println(f.getFilename() != null ? f.getFilename() : "-");
-
 			for (String line: f.getFoundLines()) {
 				System.out.println(line);
 			}
 
 			numberOfMessages++;
-
+			// Shutdown the system when all messages have been received
 			if (numberOfMessages == count) {
-				// TODO: Actors.registry().shutDownAll();
+				getContext().system().terminate();
 			}
 		} else {
 			throw new IllegalArgumentException("CollectionActor expects a message of type FileCount or Found");
