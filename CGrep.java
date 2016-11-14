@@ -22,8 +22,6 @@ public class CGrep {
 		ActorSystem system = ActorSystem.create("CGrep");
 		// Create the CollectionActor
 		ActorRef collectionActor = system.actorOf(Props.create(CollectionActor.class));
-		// Create the ScanActor
-		ActorRef scanActor = system.actorOf(Props.create(ScanActor.class));
 
 		if (args.length > 1) {
 			List<String> files = new ArrayList<String>(Arrays.asList(args));
@@ -34,10 +32,13 @@ public class CGrep {
 
 			// Tell the ScanActor the files to read
 			for (String file: files) {
+				// Create a ScanActor for each file
+				ActorRef scanActor = system.actorOf(Props.create(ScanActor.class));
 				scanActor.tell(new Configure(file, collectionActor, regex), ActorRef.noSender());
 			}
 		} else {
-			// Tell the ScanActor to read from stdin
+			// Create a ScanActor and tell it to read from stdin
+			ActorRef scanActor = system.actorOf(Props.create(ScanActor.class));
 			scanActor.tell(new Configure(null, collectionActor, regex), ActorRef.noSender());
 		}
 	}
